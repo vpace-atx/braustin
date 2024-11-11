@@ -6,8 +6,10 @@ How to Install Playwright:
 
 
 How to run tests:
+    To run all tests, run 'npx playwright test'. By default, tests will run in headless
+    mode unless you add the '--headed' flag, while will run tests in the UI.
 
-
+    
 
 About this project:
 

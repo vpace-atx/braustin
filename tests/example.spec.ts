@@ -1,18 +1,30 @@
 import { test, expect } from '@playwright/test';
+import { HomePage } from '../pages/homePage';
+import {AllModelsPage} from "../pages/allModelsPage";
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('Navigate to Homes: All Models page directly via URL', async ({ page }) => {
+  const allModelsPage: AllModelsPage = new AllModelsPage(page);
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+  await page.goto('/shop/all-models');
+
+  // confirms successful routing to All Models Page via link in UI
+  await expect(allModelsPage.navSecondaryAllModelsLink).toBeVisible();
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('Navigate to Homes: All Models page via home page', async ({ page}) => {
+  const homePage = new HomePage(page);
+  const allModelsPage: AllModelsPage = new AllModelsPage(page);
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
+  await page.goto('/');
+  await homePage.clickShopAllModelsBtn();
 
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  // confirm successful routing to All Models Page via link in UI
+  await expect(allModelsPage.navSecondaryAllModelsLink).toBeVisible();
+
+  // confirm successful routing to All Models Page via URL
+  await expect(page).toHaveURL('/shop/all-models');
+
+
 });
+
+

@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/fixtures'
+import exp = require("constants");
 
 const validSearchText = 'Clayton Tempo Yesterday'
 const invalidSearchText = 'Not a real house model'
@@ -33,6 +34,49 @@ test('Confirm that clearing the search bar will return all results', async ({ pa
     await allModelsPage.searchHomes(invalidSearchText);
     await allModelsPage.clearHomesSearch();
     await expect(allModelsPage.numberHomesReturnedText).toHaveText('83 Homes'); // Not great hardcoding 83 homes, this could be dynamic
+})
+
+test('Validate monthly payment is dynamic based off different parameters', async ({ page, allModelsPage, homeInfoPage }) => {
+    await allModelsPage.selectFirstHouse();
+    await homeInfoPage.homeModelText.isVisible();
+    let initialPaymentAmt= await homeInfoPage.getMonthlyPaymentAmount();
+    let veryGoodCreditPaymentAmt = initialPaymentAmt;
+
+    // Adjust the Credit Score to confirm change to the expected monthly payment
+    await homeInfoPage.selectVeryGoodCredit();
+    do {
+        veryGoodCreditPaymentAmt = await homeInfoPage.getMonthlyPaymentAmount();
+    } while (veryGoodCreditPaymentAmt == initialPaymentAmt);
+    expect(veryGoodCreditPaymentAmt).not.toBe(initialPaymentAmt);
+
+    let twentyPercentDownPaymentAmt = veryGoodCreditPaymentAmt;
+
+    // Adjust the down payment, both by percentage and monetary amount to confirm changes to the expected monthly payment
+    await homeInfoPage.select20PercentDownPayment();
+    do {
+        twentyPercentDownPaymentAmt = await homeInfoPage.getMonthlyPaymentAmount();
+    } while (twentyPercentDownPaymentAmt == veryGoodCreditPaymentAmt);
+    expect(twentyPercentDownPaymentAmt).not.toBe(veryGoodCreditPaymentAmt);
+    let manualDownPaymentAmt = twentyPercentDownPaymentAmt;
+    await homeInfoPage.manuallyUpdateDownPayment(0);
+    do {
+        manualDownPaymentAmt = await homeInfoPage.getMonthlyPaymentAmount();
+    } while (manualDownPaymentAmt == twentyPercentDownPaymentAmt);
+    expect(manualDownPaymentAmt).not.toBe(twentyPercentDownPaymentAmt);
+    let deliveryEstAmt = manualDownPaymentAmt;
+
+    // Make adjustments under the “Delivery Est” to confirm changes to the estimated cost
+    await homeInfoPage.calculateDeliveryEst(78758);
+    do {
+        deliveryEstAmt = await homeInfoPage.getMonthlyPaymentAmount();
+    } while (deliveryEstAmt == manualDownPaymentAmt);
+    expect(deliveryEstAmt).not.toBe(manualDownPaymentAmt);
+
+    // Confirm behavior when an invalid zip code is added
+    await homeInfoPage.calculateDeliveryEst(0);
+    await homeInfoPage.getMonthlyPaymentAmount().then(deliveryAmt => {
+        expect(deliveryAmt).toEqual(deliveryEstAmt);
+    })
 })
 
 
